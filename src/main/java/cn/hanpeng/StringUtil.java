@@ -120,7 +120,7 @@ public class StringUtil {
     }
 
     public static Set<String> readTaskLog() throws IOException {
-        /* 读入TXT文件 */
+        //读取log4j的日志文件，需要与log4j中配置文件的路径相同
         String pathname = "logs/1.log";
         File filename = new File(pathname);
         FileInputStream inputStream = new FileInputStream(filename);
