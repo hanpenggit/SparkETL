@@ -40,7 +40,7 @@ public class SparkETL {
         Broadcast<TaskVo> taskBroadcast = javaSparkContext.broadcast(task);
         JavaRDD<String> rdd = javaSparkContext.parallelize(tasks);
         logger.info("spark started ");
-        rdd.foreachPartition(i -> {
+        rdd.repartition(10000).foreachPartition(i -> {
             TaskVo task_bro = taskBroadcast.getValue();
             Class.forName(task_bro.getSourceDriver());
             Class.forName(task_bro.getTargetDriver());

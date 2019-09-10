@@ -1,13 +1,20 @@
 package cn.hanpeng;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class Test {
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
-        d();
+        long start=System.currentTimeMillis();
+        e();
+        long end=System.currentTimeMillis();
+        System.out.println("total ["+(end-start)+"] ms");
     }
 
     public static void a() {
@@ -37,8 +44,7 @@ public class Test {
     }
 
     public static void c(){
-        String sql="SELECT a.WYBS,a.XM,a.ZJHM,a.ETL_TIMESTAMP FROM HANPENG.B_MS_B06_BJ_YW_T_CRJRYDK a where ETL_TIMESTAMP>=? and ETL_TIMESTAMP<?";
-        System.out.println(sql.substring(sql.indexOf("SELECT")+6, sql.indexOf("FROM")));
+        SparkSession spark= SparkSession.builder().getOrCreate();
     }
 
     public static void d() throws ClassNotFoundException, SQLException {
@@ -70,5 +76,33 @@ public class Test {
         System.out.println(record.toJSONString());
     }
 
+    public static void e() throws ClassNotFoundException, SQLException {
+        long start_c=System.currentTimeMillis();
+        Class.forName("ru.yandex.clickhouse.ClickHouseDriver");
+        Connection conn= DriverManager.getConnection("jdbc:clickhouse://localhost:8123/default","default","123123");
+//        Calendar now=Calendar.getInstance();
+        List<List<String>> data=new ArrayList<>();
+        for(int i=0;i<100000;i++){
+            List<String> row=new ArrayList<>();
+            /*int i1 = now.get(Calendar.YEAR);
+            int i2 = now.get(Calendar.MONTH)+1;
+            String s2=String.format("%02d", i2);
+            int i3 = now.get(Calendar.DATE);
+            String s3=String.format("%02d", i3);
+            String date=i1+"-"+s2+"-"+s3+" 12:12:12";*/
+//            System.out.println(date);
+            row.add(i+"");
+            row.add("2019-09-09 00:00:00");
+            data.add(row);
+//            now.add(Calendar.DATE,1);
+        }
+        long end_c=System.currentTimeMillis();
+        System.out.println("create ["+(end_c-start_c)+"] ms");
+        long start=System.currentTimeMillis();
+        SparkETL.executeBatch(conn,"insert into B (WYBS,LOAD_DT,SIGN,VERSION) values (?,?,-1,1)",data);
+        long end=System.currentTimeMillis();
+        System.out.println("executeBatch ["+(end-start)+"] ms");
+        conn.close();
+    }
 
 }
