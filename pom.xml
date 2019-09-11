@@ -100,7 +100,7 @@
                             <!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
                             <useUniqueVersions>false</useUniqueVersions>
                             <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
+                            <classpathPrefix>sparkETL_lib/</classpathPrefix>
                         </manifest>
                         <manifestEntries>
                             <Class-Path>.</Class-Path>
@@ -122,7 +122,7 @@
                             <type>jar</type>
                             <includeTypes>jar</includeTypes>
                             <outputDirectory>
-                                ${project.build.directory}/lib
+                                ${project.build.directory}/sparkETL_lib
                             </outputDirectory>
                         </configuration>
                     </execution>

@@ -26,6 +26,12 @@ public class TaskVo implements Serializable {
     @Builder.Default
     private int parallelism=1;
     /**
+     * 重新分区，分区的个数，0代表不重新分区，即有多少个并行就会有多少个分区
+     * 该个数不能小于并行数
+     */
+    @Builder.Default
+    private int repartitionNum=0;
+    /**
      * executor的内存，默认为1g
      */
     @Builder.Default

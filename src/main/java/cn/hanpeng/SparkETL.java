@@ -13,7 +13,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 
-
+/**
+ *  -e 4g -j 20190604112235 -k 20190604083605 -n hanpeng -p 3
+ */
 public class SparkETL {
     private static Logger logger = Logger.getLogger(SparkETL.class);
     public static SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMddHHmmss");
@@ -40,7 +42,10 @@ public class SparkETL {
         Broadcast<TaskVo> taskBroadcast = javaSparkContext.broadcast(task);
         JavaRDD<String> rdd = javaSparkContext.parallelize(tasks);
         logger.info("spark started ");
-        rdd.repartition(10000).foreachPartition(i -> {
+        if(task.getRepartitionNum()!=0){
+            rdd=rdd.repartition(task.getRepartitionNum());
+        }
+        rdd.foreachPartition(i -> {
             TaskVo task_bro = taskBroadcast.getValue();
             Class.forName(task_bro.getSourceDriver());
             Class.forName(task_bro.getTargetDriver());
@@ -85,7 +90,7 @@ public class SparkETL {
                     rs.close();
                     ps.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    logger.error("任务执行发生异常",e);
                 }
             });
             source.close();
@@ -115,7 +120,7 @@ public class SparkETL {
             ps.close();
             conn.commit();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("批量提交发生异常",e);
             try {
                 conn.rollback();
             } catch (SQLException e1) {

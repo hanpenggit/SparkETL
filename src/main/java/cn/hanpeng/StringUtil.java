@@ -32,6 +32,7 @@ public class StringUtil {
         Option opt_k = Option.builder("k").longOpt("startTime").numberOfArgs(1).required(false).type(String.class).desc("startTime, required").build();
         Option opt_j = Option.builder("j").longOpt("endTime").numberOfArgs(1).required(false).type(String.class).desc("endTime, required").build();
         Option opt_r = Option.builder("r").longOpt("readLog").numberOfArgs(1).required(false).type(String.class).desc("readLog, default is true").build();
+        Option opt_g = Option.builder("g").longOpt("repartitionNum").numberOfArgs(1).required(false).type(String.class).desc("repartitionNum, The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions").build();
         opts.addOption(opt_h);
         opts.addOption(opt_l);
         opts.addOption(opt_n);
@@ -40,6 +41,7 @@ public class StringUtil {
         opts.addOption(opt_k);
         opts.addOption(opt_j);
         opts.addOption(opt_r);
+        opts.addOption(opt_g);
         CommandLine line = parser.parse(opts, args);
         String startTime="";
         String endTime="";
@@ -81,10 +83,24 @@ public class StringUtil {
             String r=line.getOptionValue("r");
             taskVoBuilder.readLog(Boolean.parseBoolean(r));
         }
-
+        int parallelism=1;
         if(line.hasOption("p")){
             String p=line.getOptionValue("p");
-            taskVoBuilder.parallelism(Integer.parseInt(p));
+            parallelism=Integer.parseInt(p);
+            taskVoBuilder.parallelism(parallelism);
+        }
+        if(line.hasOption("g")){
+            String g=line.getOptionValue("g");
+            int g_int=Integer.parseInt(g);
+            taskVoBuilder.repartitionNum(g_int);
+            if(g_int<0){
+                logger.error("repartitionNum Not less than zero");
+                System.exit(0);
+            }else if(g_int<parallelism){
+                logger.error("The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions");
+                System.exit(0);
+            }
+
         }
         if(line.hasOption("e")){
             String e=line.getOptionValue("e");
@@ -106,7 +122,7 @@ public class StringUtil {
         taskVoBuilder.insertSql(insertSql);
         String selectSql = properties.getProperty("selectSql");
         taskVoBuilder.selectSql(selectSql);
-        int selectCount=selectSql.substring(selectSql.indexOf("SELECT")+6, selectSql.indexOf("FROM")).split(",").length;
+        int selectCount=Integer.parseInt(properties.getProperty("columnCount"));
         taskVoBuilder.selectCount(selectCount);
         int batchSize=Integer.parseInt(properties.getProperty("batchSize","1000"));
         taskVoBuilder.batchSize(batchSize);
