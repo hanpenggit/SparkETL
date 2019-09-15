@@ -1,6 +1,11 @@
 package cn.hanpeng;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.log4j.Logger;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
@@ -8,11 +13,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 public class Test {
+    private static Logger logger = Logger.getLogger(Test.class);
     public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
         long start=System.currentTimeMillis();
-        e();
+        f();
         long end=System.currentTimeMillis();
         System.out.println("total ["+(end-start)+"] ms");
     }
@@ -103,6 +111,28 @@ public class Test {
         long end=System.currentTimeMillis();
         System.out.println("executeBatch ["+(end-start)+"] ms");
         conn.close();
+    }
+
+    public static void f(){
+        SparkConf conf=new SparkConf();
+        conf.set("spark.master","local[2]");
+        conf.set("spark.app.name", "test");
+        conf.set("spark.executor.memory", "4g");
+        JavaSparkContext javaSparkContext=new JavaSparkContext(conf);
+        List<Integer> tasks=new ArrayList<>();
+        IntStream.range(1,500).forEach(tasks::add);
+        JavaRDD<Integer> rdd = javaSparkContext.parallelize(tasks);
+        rdd.repartition(100).foreachPartition(i -> {
+            i.forEachRemaining(t -> {
+                logger.info(t+"");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+        javaSparkContext.close();
     }
 
 }
