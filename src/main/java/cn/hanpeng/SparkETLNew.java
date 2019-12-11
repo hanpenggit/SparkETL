@@ -1,5 +1,6 @@
 package cn.hanpeng;
 
+import com.alibaba.fastjson.JSON;
 import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
@@ -22,14 +23,15 @@ import java.util.Date;
  *  -e 4g -j 20190604112235 -k 20190604083605 -n hanpeng -p 3 -g 10000 -f yyyyMMddHHmmss
  *  -e 4g -j 20160111 -k 20160101 -n hanpeng -p 3 -f yyyyMMddHHmmss
  *
- *  此方法执行替换开始时间和结束时间仍然用?
+ *  新版本中已经去掉了? ，而是用${start} ${end}  ${partition}来代替
+ *  推荐使用新版本
  */
 @Log4j
-public class SparkETL {
+public class SparkETLNew {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
         TaskVo task = StringUtil.check_args(args);
-        List<String> tasks=createTask(task);
+        List<BatchTaskVo> tasks=createTask(task);
         if(tasks.size()>0){
             startTask(task,tasks);
         }
@@ -37,7 +39,7 @@ public class SparkETL {
         log.info("task finished,exeTime:"+(end-start)+" ms");
     }
 
-    public static void startTask(TaskVo task,List<String> tasks) throws java.text.ParseException {
+    public static void startTask(TaskVo task,List<BatchTaskVo> tasks) throws java.text.ParseException {
         SparkConf conf=new SparkConf();
         if(task.getIsLocal()){
             conf.set("spark.master","local["+task.getParallelism()+"]");
@@ -47,7 +49,7 @@ public class SparkETL {
         log.info("spark starting ");
         JavaSparkContext javaSparkContext=new JavaSparkContext(conf);
         Broadcast<TaskVo> taskBroadcast = javaSparkContext.broadcast(task);
-        JavaRDD<String> rdd = javaSparkContext.parallelize(tasks);
+        JavaRDD<BatchTaskVo> rdd = javaSparkContext.parallelize(tasks);
         log.info("spark started ");
         if(task.getRepartitionNum()!=0){
             rdd=rdd.repartition(task.getRepartitionNum());
@@ -69,16 +71,13 @@ public class SparkETL {
                 String insertSql=task_bro.getInsertSql();
                 List<List<String>> data=new ArrayList<>(task_bro.getFetchSize());
                 try {
+                    Map<String,String> kvs=new HashMap<>();
+                    kvs.put("${start}",row.getStart());
+                    kvs.put("${end}",row.getEnd());
+                    kvs.put("${partition}",row.getPartition());
+                    selectSql=StringUtil.parse(selectSql,kvs);
                     PreparedStatement ps = source.prepareStatement(selectSql);
                     ps.setFetchSize(task_bro.getFetchSize());
-                    String [] arr=row.split(",");
-                    if(arr.length==2){
-                        ps.setString(1,arr[0]);
-                        ps.setString(2,arr[1]);
-                    }else{
-                        ps.setString(1,row);
-                    }
-
                     ResultSet rs = ps.executeQuery();
                     int count=0;
                     while(rs.next()){
@@ -97,7 +96,7 @@ public class SparkETL {
                     }
                     if(count>0){
                         executeBatch(target,insertSql,data);
-                        log.info("["+row+"]"+",size:"+count);
+                        log.info("["+ JSON.toJSONString(row)+"]"+",size:"+count);
                     }
                     rs.close();
                     ps.close();
@@ -141,13 +140,7 @@ public class SparkETL {
         }
     }
 
-    public static List<String> createTask(TaskVo task) throws java.text.ParseException, IOException {
-        Set<String> logtask;
-        if(task.getReadLog()){
-            logtask = StringUtil.readTaskLog();
-        }else{
-            logtask = new HashSet<>();
-        }
+    public static List<BatchTaskVo> createTask(TaskVo task) throws java.text.ParseException, IOException {
         String format=task.getFormat();
         String startTime=task.getStartTime();
         String endTime=task.getEndTime();
@@ -156,7 +149,7 @@ public class SparkETL {
         boolean endTimeIsNotBlank=StringUtils.isNotBlank(endTime);
         boolean partitionsIsNotBlank=StringUtils.isNotBlank(task.getPartitions());
 
-        List<String> tasks=new ArrayList<>();
+        List<BatchTaskVo> tasks=new ArrayList<>();
         if(startTimeIsNotBlank&&endTimeIsNotBlank){
             Date startTime_dt = DateUtils.parseDate(startTime,format);
             Date endTime_dt = DateUtils.parseDate(endTime,format);
@@ -169,21 +162,27 @@ public class SparkETL {
                 String curr=DateFormatUtils.format(start,format);
                 start.add(Calendar.SECOND,task.getIntervalTime());
                 String next=DateFormatUtils.format(start,format);
-                String taskTime=curr+","+next;
-                if(!logtask.contains(taskTime)){
-                    tasks.add(taskTime);
-                }
+                BatchTaskVo b = new BatchTaskVo(curr,next,task.getPartitions());
+                tasks.add(b);
             }
         }else{
             if(startTimeIsNotBlank){
-                tasks.add(startTime);
+                BatchTaskVo b = new BatchTaskVo();
+                b.setStart(startTime);
+                tasks.add(b);
             }
             if(endTimeIsNotBlank){
-                tasks.add(endTime);
+                BatchTaskVo b = new BatchTaskVo();
+                b.setEnd(endTime);
+                tasks.add(b);
             }
             if(partitionsIsNotBlank){
                 String[] partitions = task.getPartitions().split(",");
-                tasks.addAll(Arrays.asList(partitions));
+                for (String partition : partitions) {
+                    BatchTaskVo b = new BatchTaskVo();
+                    b.setPartition(partition);
+                    tasks.add(b);
+                }
             }
         }
         log.info("Task Generation Completion,a total of "+tasks.size()+" tasks");
