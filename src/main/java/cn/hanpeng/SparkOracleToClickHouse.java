@@ -1,6 +1,7 @@
 package cn.hanpeng;
 
 import lombok.Data;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
@@ -33,9 +34,8 @@ insert into A(WYBS,XM,ZJHM,ETL_TIMESTAMP,SIGN) values (?,?,?,?,1)
 
  select WYBS,XM,ZJHM,ETL_TIMESTAMP,VERSION from A where WYBS='WYBS666' group by WYBS,XM,ZJHM,ETL_TIMESTAMP,VERSION having SUM(SIGN)>0 ORDER by VERSION DESC
 **/
-
+@Log4j
 public class SparkOracleToClickHouse {
-    private static Logger logger = Logger.getLogger(SparkOracleToClickHouse.class);
     public static SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMddHHmmss");
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         TaskVo task = StringUtil.check_args(args);
@@ -50,22 +50,22 @@ public class SparkOracleToClickHouse {
             conf.set("spark.app.name", task.getName());
             conf.set("spark.executor.memory", task.getExecutorMemory());
         }
-        logger.info("spark starting ");
+        log.info("spark starting ");
         JavaSparkContext javaSparkContext=new JavaSparkContext(conf);
         Broadcast<TaskVo> taskBroadcast = javaSparkContext.broadcast(task);
         JavaRDD<String> rdd = javaSparkContext.parallelize(tasks);
-        logger.info("spark started ");
+        log.info("spark started ");
         rdd.foreachPartition(i -> {
             TaskVo task_bro = taskBroadcast.getValue();
             Class.forName(task_bro.getSourceDriver());
             Class.forName(task_bro.getTargetDriver());
             Connection source= DriverManager.getConnection(task_bro.getSourceUrl(),task_bro.getSourceUser(),task_bro.getSourcePwd());
             if(!source.isClosed()){
-                logger.info("source connection connected");
+                log.info("source connection connected");
             }
             Connection target=DriverManager.getConnection(task_bro.getTargetUrl(),task_bro.getTargetUser(),task_bro.getTargetPwd());
             if(!target.isClosed()){
-                logger.info("target connection connected");
+                log.info("target connection connected");
             }
             i.forEachRemaining(row -> {
                 String selectSql=task_bro.getSelectSql();
@@ -95,12 +95,12 @@ public class SparkOracleToClickHouse {
                 }
             });
             source.close();
-            logger.info("source connection closed");
+            log.info("source connection closed");
             target.close();
-            logger.info("target connection closed");
+            log.info("target connection closed");
         });
         javaSparkContext.close();
-        logger.info("task finished, spark closed ");
+        log.info("task finished, spark closed ");
     }
 
     public static void insertClickHouse(Connection conn,List<String> values,TaskVo task) throws SQLException {
@@ -168,7 +168,7 @@ public class SparkOracleToClickHouse {
             String next=sdf.format(start.getTime());
             tasks.add(curr+","+next);
         }
-        logger.info("Task Generation Completion,a total of "+tasks.size()+" tasks");
+        log.info("Task Generation Completion,a total of "+tasks.size()+" tasks");
         return tasks;
     }
 

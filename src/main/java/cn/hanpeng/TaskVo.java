@@ -2,8 +2,10 @@ package cn.hanpeng;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.io.Serializable;
+import java.sql.Connection;
 
 /**
  * 任务属性VO
@@ -38,7 +40,7 @@ public class TaskVo implements Serializable {
     private String executorMemory="1g";
 
     @Builder.Default
-    private Boolean readLog=true;
+    private Boolean readLog=false;
 
     private String sourceUser;
     private String sourcePwd;
@@ -70,4 +72,14 @@ public class TaskVo implements Serializable {
      * 任务的间隔时间，单位ms
      */
     private Integer intervalTime;
+
+    /**
+     * 日期格式化的格式，必填
+     */
+    @NonNull
+    private String format;
+    /**
+     * 也可以按照分区进行批量抽取，多个分区名称用,分开
+     */
+    private String partitions;
 }

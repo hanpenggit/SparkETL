@@ -1,10 +1,13 @@
 package cn.hanpeng;
 
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -16,9 +19,13 @@ import java.util.regex.Pattern;
  * @author hanpeng
  * @create 2019-08-26 15:06
  */
+@Log4j
 public class StringUtil {
-    private static Pattern pattern = Pattern.compile ("(\\[[^\\]]*\\])");;
-    private static Logger logger = Logger.getLogger(StringUtil.class);
+    private static final Pattern pattern = Pattern.compile ("(\\[[^\\]]*\\])");;
+    /**
+     * 用来替换${xxx}的正则
+     */
+    private static final Pattern p = Pattern.compile("(\\$\\{)([\\w]+)(\\})");
 
     public static TaskVo check_args(String [] args) throws ParseException, IOException {
         TaskVo.TaskVoBuilder taskVoBuilder = TaskVo.builder();
@@ -31,8 +38,17 @@ public class StringUtil {
         Option opt_e = Option.builder("e").longOpt("executorMemory").numberOfArgs(1).required(false).type(String.class).desc("spark.executor.memory,default is 1g").build();
         Option opt_k = Option.builder("k").longOpt("startTime").numberOfArgs(1).required(false).type(String.class).desc("startTime, required").build();
         Option opt_j = Option.builder("j").longOpt("endTime").numberOfArgs(1).required(false).type(String.class).desc("endTime, required").build();
-        Option opt_r = Option.builder("r").longOpt("readLog").numberOfArgs(1).required(false).type(String.class).desc("readLog, default is true").build();
+        Option opt_f = Option.builder("f").longOpt("format").numberOfArgs(1).required(false).type(String.class).desc("format, required").build();
+        Option opt_r = Option.builder("r").longOpt("readLog").numberOfArgs(1).required(false).type(String.class).desc("readLog, default is false").build();
         Option opt_g = Option.builder("g").longOpt("repartitionNum").numberOfArgs(1).required(false).type(String.class).desc("repartitionNum, The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions").build();
+        Option opt_bs = Option.builder("bs").longOpt("batchSize").numberOfArgs(1).required(false).type(String.class).desc("batchSize").build();
+        Option opt_fs = Option.builder("fs").longOpt("fetchSize").numberOfArgs(1).required(false).type(String.class).desc("fetchSize").build();
+        Option opt_it = Option.builder("it").longOpt("intervalTime").numberOfArgs(1).required(false).type(String.class).desc("intervalTime").build();
+        Option opt_ss = Option.builder("ss").longOpt("selectSql").numberOfArgs(1).required(false).type(String.class).desc("selectSql").build();
+        Option opt_c = Option.builder("c").longOpt("columnCount").numberOfArgs(1).required(false).type(String.class).desc("columnCount").build();
+        Option opt_is = Option.builder("is").longOpt("insertSql").numberOfArgs(1).required(false).type(String.class).desc("insertSql").build();
+        Option opt_config = Option.builder("config").longOpt("config").numberOfArgs(1).required(false).type(String.class).desc("config path").build();
+        Option opt_sp = Option.builder("sp").longOpt("partitions").numberOfArgs(1).required(false).type(String.class).desc("Partition name, multiple separated by commas").build();
         opts.addOption(opt_h);
         opts.addOption(opt_l);
         opts.addOption(opt_n);
@@ -42,6 +58,15 @@ public class StringUtil {
         opts.addOption(opt_j);
         opts.addOption(opt_r);
         opts.addOption(opt_g);
+        opts.addOption(opt_f);
+        opts.addOption(opt_bs);
+        opts.addOption(opt_fs);
+        opts.addOption(opt_it);
+        opts.addOption(opt_ss);
+        opts.addOption(opt_c);
+        opts.addOption(opt_is);
+        opts.addOption(opt_config);
+        opts.addOption(opt_sp);
         CommandLine line = parser.parse(opts, args);
         String startTime="";
         String endTime="";
@@ -54,27 +79,51 @@ public class StringUtil {
             String n=line.getOptionValue("n");
             taskVoBuilder.name(n);
         }else{
-            logger.error(opt_n.getDescription());
+            log.error(opt_n.getDescription());
             System.exit(0);
         }
+        int timeV=0;
         if(line.hasOption("k")){
             startTime=line.getOptionValue("k");
-            taskVoBuilder.startTime(startTime);
-        }else{
-            logger.error(opt_k.getDescription());
-            System.exit(0);
+            if(StringUtils.isNotBlank(startTime)){
+                timeV++;
+                taskVoBuilder.startTime(startTime);
+            }
         }
         if(line.hasOption("j")){
             endTime=line.getOptionValue("j");
-            taskVoBuilder.endTime(endTime);
+            if(StringUtils.isNotBlank(endTime)){
+                timeV++;
+                taskVoBuilder.endTime(endTime);
+            }
+        }
+        boolean partitionExist=false;
+        if(line.hasOption("sp")){
+            String partitions=line.getOptionValue("sp");
+            if(StringUtils.isNotBlank(partitions)){
+                partitionExist=true;
+                taskVoBuilder.partitions(partitions);
+            }
+        }
+        if(timeV==0){
+            if(!partitionExist){
+                log.error("startTime and endTime cannot both be empty");
+                System.exit(0);
+            }
+        }else if(timeV==2){
+            if(startTime.compareTo(endTime)>=0){
+                log.error("The startTime should not be greater than or equal to the endTime.");
+                System.exit(0);
+            }
+        }
+        if(line.hasOption("f")){
+            String format=line.getOptionValue("f");
+            taskVoBuilder.format(format);
         }else{
-            logger.error(opt_j.getDescription());
+            log.error(opt_f.getDescription());
             System.exit(0);
         }
-        if(startTime.compareTo(endTime)>=0){
-            logger.error("The startTime should not be greater than or equal to the endTime.");
-            System.exit(0);
-        }
+
         if(line.hasOption("l")){
             String l=line.getOptionValue("l");
             taskVoBuilder.isLocal(Boolean.parseBoolean(l));
@@ -94,10 +143,10 @@ public class StringUtil {
             int g_int=Integer.parseInt(g);
             taskVoBuilder.repartitionNum(g_int);
             if(g_int<0){
-                logger.error("repartitionNum Not less than zero");
+                log.error("repartitionNum Not less than zero");
                 System.exit(0);
             }else if(g_int<parallelism){
-                logger.error("The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions");
+                log.error("The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions");
                 System.exit(0);
             }
 
@@ -106,7 +155,16 @@ public class StringUtil {
             String e=line.getOptionValue("e");
             taskVoBuilder.executorMemory(e);
         }
-        InputStream is = StringUtil.class.getClassLoader().getResourceAsStream("config.properties");
+        String config=null;
+        if(line.hasOption("config")){
+            config=line.getOptionValue("config");
+        }
+        InputStream is=null;
+        if(StringUtils.isNotBlank(config)){
+            is = new FileInputStream(new File(config));
+        }else{
+            is = StringUtil.class.getClassLoader().getResourceAsStream("config.properties");
+        }
         Properties properties=new Properties();
         properties.load(is);
         taskVoBuilder.sourceUser(properties.getProperty("source_user"));
@@ -122,19 +180,54 @@ public class StringUtil {
         taskVoBuilder.insertSql(insertSql);
         String selectSql = properties.getProperty("selectSql");
         taskVoBuilder.selectSql(selectSql);
-        int selectCount=Integer.parseInt(properties.getProperty("columnCount"));
-        taskVoBuilder.selectCount(selectCount);
-        int batchSize=Integer.parseInt(properties.getProperty("batchSize","1000"));
-        taskVoBuilder.batchSize(batchSize);
-        int fetchSize=Integer.parseInt(properties.getProperty("fetchSize",batchSize+""));
-        taskVoBuilder.fetchSize(fetchSize);
-        int intervalTime=Integer.parseInt(properties.getProperty("intervalTime"));
-        taskVoBuilder.intervalTime(intervalTime);
+        if (properties.containsKey("columnCount")) {
+            int selectCount=Integer.parseInt(properties.getProperty("columnCount"));
+            taskVoBuilder.selectCount(selectCount);
+        }
+        if (properties.containsKey("batchSize")) {
+            int batchSize=Integer.parseInt(properties.getProperty("batchSize","1000"));
+            taskVoBuilder.batchSize(batchSize);
+        }
+        if (properties.containsKey("fetchSize")) {
+            int fetchSize=Integer.parseInt(properties.getProperty("fetchSize","1000"));
+            taskVoBuilder.fetchSize(fetchSize);
+        }
+        if (properties.containsKey("intervalTime")) {
+            int intervalTime=Integer.parseInt(properties.getProperty("intervalTime"));
+            taskVoBuilder.intervalTime(intervalTime);
+        }
+
+        if(line.hasOption("bs")){
+            String bs=line.getOptionValue("bs");
+            taskVoBuilder.batchSize(Integer.parseInt(bs));
+        }
+        if(line.hasOption("fs")){
+            String fs=line.getOptionValue("fs");
+            taskVoBuilder.fetchSize(Integer.parseInt(fs));
+        }
+        if(line.hasOption("it")){
+            String it=line.getOptionValue("it");
+            taskVoBuilder.intervalTime(Integer.parseInt(it));
+        }
+        if(line.hasOption("ss")){
+            String ss=line.getOptionValue("ss");
+            taskVoBuilder.selectSql(ss);
+        }
+        if(line.hasOption("c")){
+            String c=line.getOptionValue("c");
+            taskVoBuilder.selectCount(Integer.parseInt(c));
+        }
+        if(line.hasOption("is")){
+            String v=line.getOptionValue("is");
+            taskVoBuilder.insertSql(v);
+        }
+
         TaskVo task = taskVoBuilder.build();
-        logger.info(task.toString());
+        log.info(task.toString());
         return task;
     }
 
+    @Deprecated
     public static Set<String> readTaskLog() throws IOException {
         //读取log4j的日志文件，需要与log4j中配置文件的路径相同
         String pathname = "logs/1.log";
@@ -144,24 +237,37 @@ public class StringUtil {
         BufferedReader br = new BufferedReader(reader);
         String line = "";
         line = br.readLine();
-        StringBuilder sr=new StringBuilder();
+        Set<String> taskTimeList=new HashSet<>();
         while (line != null) {
+            Matcher matcher = pattern.matcher (line);
+            while (matcher.find ()){
+                String group = matcher.group();
+                if(group.length()!=31){
+                    continue;
+                }
+                group=group.replace("[","").replace("]","");
+                taskTimeList.add(group);
+            }
             line = br.readLine();
-            sr.append(line);
         }
         br.close();
         reader.close();
         inputStream.close();
-        Matcher matcher = pattern.matcher (sr.toString());
-        Set<String> taskTimeList=new HashSet<>();
-        while (matcher.find ()){
-            String group = matcher.group();
-            if(group.length()!=31){
-                continue;
-            }
-            group=group.replace("[","").replace("]","");
-            taskTimeList.add(group);
-        }
         return taskTimeList;
     }
+
+    public static String parse(String content, Map<String,String> kvs){
+        Matcher m = p.matcher(content);
+        StringBuffer sr = new StringBuffer();
+        while(m.find()){
+            String group = m.group();
+            String value=kvs.get(group);
+            if(StringUtils.isNotBlank(value)){
+                m.appendReplacement(sr, kvs.get(group));
+            }
+        }
+        m.appendTail(sr);
+        return sr.toString();
+    }
+
 }
