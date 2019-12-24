@@ -1,8 +1,10 @@
 package cn.hanpeng;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.Cleanup;
 import lombok.extern.log4j.Log4j;
+import org.apache.commons.cli.ParseException;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -16,11 +18,13 @@ import java.util.stream.IntStream;
 
 @Log4j
 public class Test {
-    public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException, ParseException, java.text.ParseException {
         long start=System.currentTimeMillis();
-        g();
+        TaskVo task = StringUtil.check_args(args);
+        List<BatchTaskVo> tasks=SparkETLNew.createTask(task);
+        log.info(JSON.toJSONString(tasks));
         long end=System.currentTimeMillis();
-        System.out.println("total ["+(end-start)+"] ms");
+        log.info("total ["+(end-start)+"] ms");
     }
 
 

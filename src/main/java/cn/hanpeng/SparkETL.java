@@ -23,8 +23,11 @@ import java.util.Date;
  *  -e 4g -j 20160111 -k 20160101 -n hanpeng -p 3 -f yyyyMMddHHmmss
  *
  *  此方法执行替换开始时间和结束时间仍然用?
+ *
+ *  此方法已经过时，可以使用SparkETLNew来代替
  */
 @Log4j
+@Deprecated
 public class SparkETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
@@ -87,8 +90,8 @@ public class SparkETL {
                         for(int j=1;j<=task_bro.getSelectCount();j++){
                             d.add(rs.getString(j));
                         }
-//                        d.add("1");
-//                        d.add(System.currentTimeMillis()+"");
+                        d.add("1");
+                        d.add(System.currentTimeMillis()+"");
                         data.add(d);
                         if(count%task_bro.getBatchSize()==0){
                             executeBatch(target,insertSql,data);

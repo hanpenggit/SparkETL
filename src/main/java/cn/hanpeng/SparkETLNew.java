@@ -86,8 +86,8 @@ public class SparkETLNew {
                         for(int j=1;j<=task_bro.getSelectCount();j++){
                             d.add(rs.getString(j));
                         }
-//                        d.add("1");
-//                        d.add(System.currentTimeMillis()+"");
+                        d.add("1");
+                        d.add(System.currentTimeMillis()+"");
                         data.add(d);
                         if(count%task_bro.getBatchSize()==0){
                             executeBatch(target,insertSql,data);
@@ -151,7 +151,7 @@ public class SparkETLNew {
 
         List<BatchTaskVo> tasks=new ArrayList<>();
         if(startTimeIsNotBlank&&endTimeIsNotBlank){
-            Date startTime_dt = DateUtils.parseDate(startTime,format);
+            /*Date startTime_dt = DateUtils.parseDate(startTime,format);
             Date endTime_dt = DateUtils.parseDate(endTime,format);
             Calendar start=Calendar.getInstance();
             Calendar end=Calendar.getInstance();
@@ -164,7 +164,8 @@ public class SparkETLNew {
                 String next=DateFormatUtils.format(start,format);
                 BatchTaskVo b = new BatchTaskVo(curr,next,task.getPartitions());
                 tasks.add(b);
-            }
+            }*/
+            createTaskByStartEndTime(tasks,startTime,endTime,format,task.getIntervalTime(),null);
         }else{
             if(startTimeIsNotBlank){
                 BatchTaskVo b = new BatchTaskVo();
@@ -179,13 +180,40 @@ public class SparkETLNew {
             if(partitionsIsNotBlank){
                 String[] partitions = task.getPartitions().split(",");
                 for (String partition : partitions) {
-                    BatchTaskVo b = new BatchTaskVo();
-                    b.setPartition(partition);
-                    tasks.add(b);
+                    if(partition.contains(":")){
+                        String[] paritionTime = partition.split(":");
+                        String partitionName=paritionTime[0];
+                        String time=paritionTime[1];
+                        String[] timeArr = time.split("-");
+                        String start=timeArr[0];
+                        String end=timeArr[1];
+                        createTaskByStartEndTime(tasks,start,end,format,task.getIntervalTime(),partitionName);
+                    }else{
+                        BatchTaskVo b = new BatchTaskVo();
+                        b.setPartition(partition);
+                        tasks.add(b);
+                    }
                 }
             }
         }
         log.info("Task Generation Completion,a total of "+tasks.size()+" tasks");
         return tasks;
+    }
+
+    public static void createTaskByStartEndTime(List<BatchTaskVo> tasks,String startTime,String endTime,String format,int intervalTime,String partition) throws java.text.ParseException {
+        Date startTime_dt = DateUtils.parseDate(startTime,format);
+        Date endTime_dt = DateUtils.parseDate(endTime,format);
+        Calendar start=Calendar.getInstance();
+        Calendar end=Calendar.getInstance();
+        start.setTime(startTime_dt);
+        end.setTime(endTime_dt);
+
+        while(end.after(start)){
+            String curr=DateFormatUtils.format(start,format);
+            start.add(Calendar.SECOND,intervalTime);
+            String next=DateFormatUtils.format(start,format);
+            BatchTaskVo b = new BatchTaskVo(curr,next,partition);
+            tasks.add(b);
+        }
     }
 }
