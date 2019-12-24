@@ -86,8 +86,8 @@ public class SparkETLNew {
                         for(int j=1;j<=task_bro.getSelectCount();j++){
                             d.add(rs.getString(j));
                         }
-                        d.add("1");
-                        d.add(System.currentTimeMillis()+"");
+//                        d.add("1");
+//                        d.add(System.currentTimeMillis()+"");
                         data.add(d);
                         if(count%task_bro.getBatchSize()==0){
                             executeBatch(target,insertSql,data);
