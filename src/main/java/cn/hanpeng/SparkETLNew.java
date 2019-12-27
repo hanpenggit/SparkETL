@@ -39,7 +39,7 @@ public class SparkETLNew {
         log.info("task finished,exeTime:"+(end-start)+" ms");
     }
 
-    public static void startTask(TaskVo task,List<BatchTaskVo> tasks) throws java.text.ParseException {
+    public static void startTask(TaskVo task,List<BatchTaskVo> tasks) {
         SparkConf conf=new SparkConf();
         if(task.getIsLocal()){
             conf.set("spark.master","local["+task.getParallelism()+"]");
@@ -86,8 +86,6 @@ public class SparkETLNew {
                         for(int j=1;j<=task_bro.getSelectCount();j++){
                             d.add(rs.getString(j));
                         }
-//                        d.add("1");
-//                        d.add(System.currentTimeMillis()+"");
                         data.add(d);
                         if(count%task_bro.getBatchSize()==0){
                             executeBatch(target,insertSql,data);
@@ -96,7 +94,7 @@ public class SparkETLNew {
                     }
                     if(count>0){
                         executeBatch(target,insertSql,data);
-                        log.info("["+ JSON.toJSONString(row)+"]"+",size:"+count);
+                        log.info(String.format("[%s],size:%d",JSON.toJSONString(row),count));
                     }
                     rs.close();
                     ps.close();
@@ -151,20 +149,6 @@ public class SparkETLNew {
 
         List<BatchTaskVo> tasks=new ArrayList<>();
         if(startTimeIsNotBlank&&endTimeIsNotBlank){
-            /*Date startTime_dt = DateUtils.parseDate(startTime,format);
-            Date endTime_dt = DateUtils.parseDate(endTime,format);
-            Calendar start=Calendar.getInstance();
-            Calendar end=Calendar.getInstance();
-            start.setTime(startTime_dt);
-            end.setTime(endTime_dt);
-
-            while(end.after(start)){
-                String curr=DateFormatUtils.format(start,format);
-                start.add(Calendar.SECOND,task.getIntervalTime());
-                String next=DateFormatUtils.format(start,format);
-                BatchTaskVo b = new BatchTaskVo(curr,next,task.getPartitions());
-                tasks.add(b);
-            }*/
             createTaskByStartEndTime(tasks,startTime,endTime,format,task.getIntervalTime(),null);
         }else{
             if(startTimeIsNotBlank){
