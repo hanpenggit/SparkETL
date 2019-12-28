@@ -1,9 +1,8 @@
 package cn.hanpeng;
 
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.HashSet;
@@ -19,7 +18,7 @@ import java.util.regex.Pattern;
  * @author hanpeng
  * @create 2019-08-26 15:06
  */
-@Log4j
+@Log4j2
 public class StringUtil {
     private static final Pattern pattern = Pattern.compile ("(\\[[^\\]]*\\])");;
     /**

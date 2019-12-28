@@ -1,12 +1,11 @@
 package cn.hanpeng;
 
 import com.alibaba.fastjson.JSON;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -14,20 +13,19 @@ import org.apache.spark.broadcast.Broadcast;
 
 import java.io.IOException;
 import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.*;
 import java.util.Date;
+import java.util.*;
 
 /**
+ *
+ *  并行和分区采用Spark  jdbc仍然手动实现
+ *  全部都是用Spark实现，请参考 SparkETL
  *  -e 4g -j 20190604112235 -k 20190604083605 -n hanpeng -p 3 -g 10000 -f yyyyMMddHHmmss
  *  -e 4g -j 20160111 -k 20160101 -n hanpeng -p 3 -f yyyyMMddHHmmss
  *
- *  新版本中已经去掉了? ，而是用${start} ${end}  ${partition}来代替
- *  推荐使用新版本
  */
-@Log4j
-public class SparkETLNew {
+@Log4j2
+public class SparkJdbcETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
         TaskVo task = StringUtil.check_args(args);
@@ -36,7 +34,7 @@ public class SparkETLNew {
             startTask(task,tasks);
         }
         long end=System.currentTimeMillis();
-        log.info("task finished,exeTime:"+(end-start)+" ms");
+        log.info("task finished,exeTime:{} ms",(end-start));
     }
 
     public static void startTask(TaskVo task,List<BatchTaskVo> tasks) {
@@ -94,7 +92,7 @@ public class SparkETLNew {
                     }
                     if(count>0){
                         executeBatch(target,insertSql,data);
-                        log.info(String.format("[%s],size:%d",JSON.toJSONString(row),count));
+                        log.info(String.format("{},size:{}",JSON.toJSONString(row),count));
                     }
                     rs.close();
                     ps.close();

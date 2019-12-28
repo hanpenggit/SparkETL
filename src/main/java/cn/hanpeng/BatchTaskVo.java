@@ -3,7 +3,7 @@ package cn.hanpeng;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.Serializable;
 
@@ -13,7 +13,7 @@ import java.io.Serializable;
  * @author hanpeng
  * @create 2019-12-11 11:50
  */
-@Log4j
+@Log4j2
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
