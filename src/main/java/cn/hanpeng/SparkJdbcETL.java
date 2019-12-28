@@ -1,7 +1,7 @@
 package cn.hanpeng;
 
 import com.alibaba.fastjson.JSON;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -19,12 +19,15 @@ import java.util.*;
 /**
  *
  *  并行和分区采用Spark  jdbc仍然手动实现
- *  全部都是用Spark实现，请参考 SparkETL
+ *  纯用Spark实现，请参考 SparkETL ，但是仍然推荐不用纯Spark
+ *  因为纯Spark的并行，每个分区(分区基于predicates集合的个数)都将新建一个数据库连接，会造成特别多的创建和关闭数据连接的动作
+ *  当前类的实现是先将任务进行分区，每个分区会有多个任务，如果不使用 -g 进行重新分区，则哪怕是10万个任务，也只会建立与并行数相同的数据库连接
+ *
  *  -e 4g -j 20190604112235 -k 20190604083605 -n hanpeng -p 3 -g 10000 -f yyyyMMddHHmmss
  *  -e 4g -j 20160111 -k 20160101 -n hanpeng -p 3 -f yyyyMMddHHmmss
  *
  */
-@Log4j2
+@Log4j
 public class SparkJdbcETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
@@ -34,7 +37,7 @@ public class SparkJdbcETL {
             startTask(task,tasks);
         }
         long end=System.currentTimeMillis();
-        log.info("task finished,exeTime:{} ms",(end-start));
+        log.info(String.format("task finished,exeTime:%d ms",(end-start)));
     }
 
     public static void startTask(TaskVo task,List<BatchTaskVo> tasks) {

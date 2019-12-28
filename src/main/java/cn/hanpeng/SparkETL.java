@@ -1,6 +1,6 @@
 package cn.hanpeng;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -21,7 +21,7 @@ import static org.apache.spark.sql.functions.lit;
  *
  */
 
-@Log4j2
+@Log4j
 public class SparkETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
@@ -30,12 +30,12 @@ public class SparkETL {
                 .builder().master("local[1]")
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
-        String [] predicates={"name='a'"};
+        String [] predicates={"name='a'","name='b'"};
         Properties sourceProp=new Properties();
-        sourceProp.put("user","test_dcplat");
-        sourceProp.put("password","test_dcplat");
+        sourceProp.put("user","dcap");
+        sourceProp.put("password","1qaz@WSX");
         String sourceUrl="jdbc:mysql://192.168.1.13:3306/dcap?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true";
-        Dataset<Row> ds = spark.read().jdbc(sourceUrl, "A", predicates, sourceProp).withColumn("SIGN",lit(1)).withColumn("VERSION", col("LOAD_DT"));
+        Dataset<Row> ds = spark.read().jdbc(sourceUrl, "a", predicates, sourceProp).withColumn("SIGN",lit(1)).withColumn("VERSION", col("LOAD_DT"));
         Properties targetProp=new Properties();
         targetProp.put("user","");
         targetProp.put("password","");
@@ -43,6 +43,6 @@ public class SparkETL {
         ds.write().mode(SaveMode.Append).jdbc(targetUrl,"a",targetProp);
         spark.close();
         long end=System.currentTimeMillis();
-        log.info("task finished,exeTime:{} ms",(end-start));
+        log.info(String.format("task finished,exeTime:%d ms",(end-start)));
     }
 }

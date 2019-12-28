@@ -22,7 +22,6 @@
 
     <properties>
         <spark.version>2.4.4</spark.version>
-        <log4j2.version>2.13.0</log4j2.version>
     </properties>
 
     <dependencies>
@@ -44,14 +43,9 @@
             <version>11</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j2.version}</version>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
         </dependency>
         <dependency>
             <groupId>ru.yandex.clickhouse</groupId>
