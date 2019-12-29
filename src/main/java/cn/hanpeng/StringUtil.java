@@ -1,5 +1,6 @@
 package cn.hanpeng;
 
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,8 @@ public class StringUtil {
      */
     private static final Pattern p = Pattern.compile("(\\$\\{)([\\w]+)(\\})");
 
-    public static TaskVo check_args(String [] args) throws ParseException, IOException {
+    @SneakyThrows
+    public static TaskVo check_args(String [] args) {
         TaskVo.TaskVoBuilder taskVoBuilder = TaskVo.builder();
         CommandLineParser parser = new DefaultParser();
         Options opts = new Options();
@@ -166,6 +168,7 @@ public class StringUtil {
         }
         Properties properties=new Properties();
         properties.load(is);
+        DataSourceUtil.load(properties);
         taskVoBuilder.sourceUser(properties.getProperty("source_user"));
         taskVoBuilder.sourcePwd(properties.getProperty("source_pwd"));
         taskVoBuilder.sourceUrl(properties.getProperty("source_url"));
