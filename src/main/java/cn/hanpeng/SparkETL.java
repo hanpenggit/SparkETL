@@ -25,9 +25,10 @@ import static org.apache.spark.sql.functions.lit;
 public class SparkETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();
-//        TaskVo task = StringUtil.check_args(args);
+        TaskVo task = StringUtil.check_args(args);
+        int parallel=task.getParallelism();
         SparkSession spark = SparkSession
-                .builder().master("local[1]")
+                .builder().master("local["+parallel+"]")
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
         String [] predicates={"name='a'","name='b'"};
