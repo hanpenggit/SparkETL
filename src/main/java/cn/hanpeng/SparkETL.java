@@ -1,6 +1,6 @@
 package cn.hanpeng;
 
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.ParseException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -21,7 +21,7 @@ import static org.apache.spark.sql.functions.lit;
  *
  */
 
-@Log4j
+@Slf4j
 public class SparkETL {
     public static void main(String[] args) throws ParseException, IOException, java.text.ParseException {
         long start=System.currentTimeMillis();

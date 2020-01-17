@@ -2,7 +2,7 @@ package cn.hanpeng;
 
 import com.alibaba.fastjson.JSON;
 import lombok.Cleanup;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -18,7 +18,7 @@ import java.util.*;
  * @author hanpeng
  * @create 2019-12-29 9:23
  */
-@Log4j
+@Slf4j
 public class TaskUtil {
 
     public static void executeEtlTask(TaskVo task_bro, BatchTaskVo row, Connection source,Connection target){
@@ -51,7 +51,7 @@ public class TaskUtil {
             }
             if(count>0){
                 executeBatch(target,insertSql,data);
-                log.info(String.format("%s,size:%d", JSON.toJSONString(row),count));
+                log.info("{},size:{}",JSON.toJSONString(row),count);
             }
         } catch (SQLException e) {
             log.error("任务执行发生异常",e);

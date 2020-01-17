@@ -1,6 +1,6 @@
 package cn.hanpeng;
 
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -21,7 +21,7 @@ import java.util.List;
  *  -e 4g -j 20160111 -k 20160101 -n hanpeng -p 3 -f yyyyMMddHHmmss
  *
  */
-@Log4j
+@Slf4j
 public class SparkJdbcETL {
     public static void main(String[] args) {
         long start=System.currentTimeMillis();
@@ -37,7 +37,7 @@ public class SparkJdbcETL {
             startTask(task,tasks);
         }
         long end=System.currentTimeMillis();
-        log.info(String.format("task finished,exeTime:%d ms",(end-start)));
+        log.info("task finished,exeTime:{} ms",(end-start));
     }
 
     public static void startTask(TaskVo task,List<BatchTaskVo> tasks) {

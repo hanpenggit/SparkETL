@@ -2,7 +2,7 @@ package cn.hanpeng;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Properties;
 
@@ -10,7 +10,7 @@ import java.util.Properties;
  * @author hanpeng
  * @create 2019-12-29 9:53
  */
-@Log4j
+@Slf4j
 public class DataSourceUtil {
 
     public static DruidDataSource getSourceDataSource(TaskVo task){
