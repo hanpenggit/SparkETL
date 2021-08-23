@@ -23,6 +23,12 @@ import java.util.Date;
 public class SparkETLNew {
     private static final Logger log = Logger.getLogger(SparkETLNew.class);
 
+    /**
+     *  --name sparkETL --isLocal true --start 0 --end 10 --format num --interval 1
+     * @author hanpeng
+     * @date 2021/8/23 14:26
+     * @param args 输入参数
+     */
     public static void main(String[] args) throws ParseException {
         long start = System.currentTimeMillis();
         TaskVo task = StringUtil.check_args(args);
