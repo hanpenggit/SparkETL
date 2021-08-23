@@ -6,23 +6,28 @@
 
     <groupId>cn.hanpeng</groupId>
     <artifactId>sparkETL</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <properties>
-        <spark.version>2.4.4</spark.version>
+        <spark.version>3.1.2</spark.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <log4j-core>2.13.3</log4j-core>
-        <clickhouse-jdbc>0.2.4</clickhouse-jdbc>
+
+        <log4j-core>2.14.1</log4j-core>
+        <lombok>1.18.20</lombok>
+
+        <fastjson>1.2.78</fastjson>
+        <druid>1.2.6</druid>
+
         <commons-cli>1.4</commons-cli>
-        <lombok>1.18.12</lombok>
-        <fastjson>1.2.72</fastjson>
-        <mysql-connector-java>8.0.21</mysql-connector-java>
-        <druid>1.1.23</druid>
-        <commons-io>2.7</commons-io>
-        <commons-lang3>3.10</commons-lang3>
-        <commons-codec>1.14</commons-codec>
+        <commons-io>2.11.0</commons-io>
+        <commons-lang3>3.12.0</commons-lang3>
+        <commons-codec>1.15</commons-codec>
         <commons-collections4>4.4</commons-collections4>
         <commons-beanutils>1.9.4</commons-beanutils>
+
+        <mysql-connector-java>8.0.26</mysql-connector-java>
+        <clickhouse-jdbc>0.3.1</clickhouse-jdbc>
+        <postgresql.version>42.2.23</postgresql.version>
     </properties>
 
     <dependencies>
@@ -38,11 +43,11 @@
             <artifactId>spark-sql_2.12</artifactId>
             <version>${spark.version}</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc5</artifactId>
             <version>11.2.0</version>
-        </dependency>
+        </dependency>-->
         <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -88,6 +93,12 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql-connector-java}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
