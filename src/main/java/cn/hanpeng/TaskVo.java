@@ -66,17 +66,16 @@ public class TaskVo implements Serializable {
      */
     @Builder.Default
     private Integer fetchSize=1000;
-    private String startTime;
-    private String endTime;
+    private String start;
+    private String end;
     /**
-     * 任务的间隔时间，单位ms
+     * 任务的间隔，可能为时间间隔，也可能为数字的间隔
      */
-    private Integer intervalTime;
+    private Integer interval;
 
     /**
      * 日期格式化的格式，必填
      */
-    @NonNull
     private String format;
     /**
      * 也可以按照分区进行批量抽取，多个分区名称用,分开

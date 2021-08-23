@@ -37,14 +37,14 @@ public class StringUtil {
         Option opt_n = Option.builder("n").longOpt("name").numberOfArgs(1).required(false).type(String.class).desc("spark.app.name, required").build();
         Option opt_p = Option.builder("p").longOpt("parallelism").numberOfArgs(1).required(false).type(String.class).desc("parallelism,default is 1").build();
         Option opt_e = Option.builder("e").longOpt("executorMemory").numberOfArgs(1).required(false).type(String.class).desc("spark.executor.memory,default is 1g").build();
-        Option opt_k = Option.builder("k").longOpt("startTime").numberOfArgs(1).required(false).type(String.class).desc("startTime, required").build();
-        Option opt_j = Option.builder("j").longOpt("endTime").numberOfArgs(1).required(false).type(String.class).desc("endTime, required").build();
-        Option opt_f = Option.builder("f").longOpt("format").numberOfArgs(1).required(false).type(String.class).desc("format, required").build();
+        Option opt_k = Option.builder("k").longOpt("start").numberOfArgs(1).required(false).type(String.class).desc("start, required").build();
+        Option opt_j = Option.builder("j").longOpt("end").numberOfArgs(1).required(false).type(String.class).desc("end, required").build();
+        Option opt_f = Option.builder("f").longOpt("format").numberOfArgs(1).required(false).type(String.class).desc("format").build();
         Option opt_r = Option.builder("r").longOpt("readLog").numberOfArgs(1).required(false).type(String.class).desc("readLog, default is false").build();
         Option opt_g = Option.builder("g").longOpt("repartitionNum").numberOfArgs(1).required(false).type(String.class).desc("repartitionNum, The number of partitions to be re-partitioned, which should not be less than the number of parallel partitions").build();
         Option opt_bs = Option.builder("bs").longOpt("batchSize").numberOfArgs(1).required(false).type(String.class).desc("batchSize").build();
         Option opt_fs = Option.builder("fs").longOpt("fetchSize").numberOfArgs(1).required(false).type(String.class).desc("fetchSize").build();
-        Option opt_it = Option.builder("it").longOpt("intervalTime").numberOfArgs(1).required(false).type(String.class).desc("intervalTime").build();
+        Option opt_it = Option.builder("it").longOpt("interval").numberOfArgs(1).required(false).type(String.class).desc("interval").build();
         Option opt_ss = Option.builder("ss").longOpt("selectSql").numberOfArgs(1).required(false).type(String.class).desc("selectSql").build();
         Option opt_c = Option.builder("c").longOpt("columnCount").numberOfArgs(1).required(false).type(String.class).desc("columnCount").build();
         Option opt_is = Option.builder("is").longOpt("insertSql").numberOfArgs(1).required(false).type(String.class).desc("insertSql").build();
@@ -88,14 +88,14 @@ public class StringUtil {
             startTime=line.getOptionValue("k");
             if(StringUtils.isNotBlank(startTime)){
                 timeV++;
-                taskVoBuilder.startTime(startTime);
+                taskVoBuilder.start(startTime);
             }
         }
         if(line.hasOption("j")){
             endTime=line.getOptionValue("j");
             if(StringUtils.isNotBlank(endTime)){
                 timeV++;
-                taskVoBuilder.endTime(endTime);
+                taskVoBuilder.end(endTime);
             }
         }
         boolean partitionExist=false;
@@ -120,9 +120,6 @@ public class StringUtil {
         if(line.hasOption("f")){
             String format=line.getOptionValue("f");
             taskVoBuilder.format(format);
-        }else{
-            log.error(opt_f.getDescription());
-            System.exit(0);
         }
 
         if(line.hasOption("l")){
@@ -160,9 +157,9 @@ public class StringUtil {
         if(line.hasOption("config")){
             config=line.getOptionValue("config");
         }
-        InputStream is=null;
+        InputStream is;
         if(StringUtils.isNotBlank(config)){
-            is = new FileInputStream(new File(config));
+            is = new FileInputStream(config);
         }else{
             is = StringUtil.class.getClassLoader().getResourceAsStream("config.properties");
         }
@@ -196,7 +193,7 @@ public class StringUtil {
         }
         if (properties.containsKey("intervalTime")) {
             int intervalTime=Integer.parseInt(properties.getProperty("intervalTime"));
-            taskVoBuilder.intervalTime(intervalTime);
+            taskVoBuilder.interval(intervalTime);
         }
 
         if(line.hasOption("bs")){
@@ -209,7 +206,7 @@ public class StringUtil {
         }
         if(line.hasOption("it")){
             String it=line.getOptionValue("it");
-            taskVoBuilder.intervalTime(Integer.parseInt(it));
+            taskVoBuilder.interval(Integer.parseInt(it));
         }
         if(line.hasOption("ss")){
             String ss=line.getOptionValue("ss");
