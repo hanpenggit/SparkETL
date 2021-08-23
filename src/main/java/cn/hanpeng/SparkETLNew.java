@@ -110,8 +110,8 @@ public class SparkETLNew {
 
                     rs.close();
                     ps.close();
-                } catch (SQLException var13) {
-                    log.error("任务执行发生异常", var13);
+                } catch (SQLException e) {
+                    log.error("任务执行发生异常", e);
                 }
 
             });
@@ -141,12 +141,12 @@ public class SparkETLNew {
             ps.executeBatch();
             ps.close();
             conn.commit();
-        } catch (SQLException var10) {
-            log.error("批量提交发生异常", var10);
+        } catch (SQLException e) {
+            log.error("批量提交发生异常", e);
             try {
                 conn.rollback();
-            } catch (SQLException var9) {
-                var9.printStackTrace();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
             }
         }
 
@@ -182,11 +182,10 @@ public class SparkETLNew {
 
             if (partitionsIsNotBlank) {
                 String[] partitions = task.getPartitions().split(",");
-                String[] var9 = partitions;
-                int var10 = partitions.length;
+                int length = partitions.length;
 
-                for (int var11 = 0; var11 < var10; ++var11) {
-                    String partition = var9[var11];
+                for (int i = 0; i < length; ++i) {
+                    String partition = partitions[i];
                     if (partition.contains(":")) {
                         String[] paritionTime = partition.split(":");
                         String partitionName = paritionTime[0];
