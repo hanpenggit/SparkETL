@@ -11,7 +11,7 @@
     <properties>
         <spark.version>2.4.4</spark.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <log4j-core>2.13.3</log4j-core>
+        <log4j-core>2.15.0</log4j-core>
         <clickhouse-jdbc>0.2.4</clickhouse-jdbc>
         <commons-cli>1.4</commons-cli>
         <lombok>1.18.12</lombok>
