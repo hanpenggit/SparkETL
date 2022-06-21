@@ -16,7 +16,7 @@
         <commons-cli>1.4</commons-cli>
         <lombok>1.18.12</lombok>
         <fastjson>1.2.72</fastjson>
-        <mysql-connector-java>8.0.21</mysql-connector-java>
+        <mysql-connector-java>8.0.28</mysql-connector-java>
         <druid>1.1.23</druid>
         <commons-io>2.7</commons-io>
         <commons-lang3>3.10</commons-lang3>
